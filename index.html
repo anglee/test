@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>TEST</title>
   <script src="bower_components/d3/d3.js"></script>
+  <script src="bower_components/underscore/underscore.js"></script>
   <style type="text/css">
 
     body
@@ -14,26 +15,69 @@
 
     .bar
     {
-      display: inline-block;
-      width: 20px;
-      height: 75px; /* Gets overriden by D3-assigned height below */
-      margin-right: 2px;
-      background-color: teal;
+      fill: teal;
     }
 
+    #chartArea
+    {
+      width: 1500px;
+      height: 500px;
+      background: lightblue;
+    }
   </style>
 </head>
 <body>
+  <div id="chartArea"></div>
   <script>
-    var data = [1,2,3,4,5];
-    d3.select('body').selectAll('div')
-        .data(data)
+    var dataset = _(_.range(1, 365)).map(function(it) {
+      return new Date(2014, 0, it);
+    });
+    window.dataset = dataset;
+    var svg = d3.select('#chartArea').append('svg')
+        .attr('width', 1500)
+        .attr('height', 500);
+
+    var temp = _(_.range(1, 13)).map(function(m) {
+      var begin = new Date(2014, m - 1, 1);
+      var end = new Date(2014, m, 0);
+      var days = end.getDate() - begin.getDate() + 1;
+      var offset = begin.getDay();
+      var weeks = Math.ceil((days + offset) / 7);
+      if (end.getDay() === 6) {
+        weeks += 1;
+      }
+      return weeks;
+    });
+
+    var sum = 0;
+    var accu = _(temp).map(function(it) {
+      var ret = sum;
+      sum += it;
+      return ret;
+    });
+    console.log(accu[0]);
+    // January = 0
+    // February = 1
+    // Sunday = 0
+    // Saturday = 6
+
+    svg.selectAll('rect')
+        .data(dataset)
         .enter()
-        .append('div')
+        .append('rect')
         .attr('class', 'bar')
-        .style('height', function(d) {
-          return d * 5 + "px";
-        });
+        .attr('x', function(d, i) {
+          var offset = new Date(2014, d.getMonth(), 1).getDay();
+          var t = d.getDate() - 1 + offset;
+          return (accu[d.getMonth()] + Math.floor(t / 7) - d.getMonth() * 0.7) * 22;
+        })
+        .attr('y', function(d, i) {
+          var offset = new Date(2014, d.getMonth(), 1).getDay();
+          var t = d.getDate() - 1 + offset;
+          return (t % 7) * 22;
+        })
+        .attr('width', 20)
+        .attr('height', 20);
   </script>
 </body>
 </html>
