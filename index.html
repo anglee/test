@@ -10,7 +10,7 @@
     body
     {
       padding-top: 50px;
-      padding-left: 100px;
+      padding-left: 10px;
     }
 
     .bar
@@ -29,6 +29,46 @@
 <body>
   <div id="chartArea"></div>
   <script>
+    
+    var getMonthDayOffset = function(year, month) {
+      return new Date(year, month, 1).getDay();
+    };
+
+    var getMonthColumnWidth = function(year, month) {
+      var begin = new Date(year, month, 1);
+      var end = new Date(year, month + 1, 0);
+      var days = end.getDate() - begin.getDate() + 1;
+      var offset = begin.getDay();
+      var weeks = Math.ceil((offset + days) / 7);
+      return weeks;
+    };
+
+    var getStartColumn = function(year, month) {
+      return _.chain(_.range(0, month)).map(function(m) {
+        return getMonthColumnWidth(year, m);
+      }).reduce(function(sum, w) {
+        return sum + w;
+      }, 0).value();
+    };
+
+    var SUNDAY = 0;
+    var SATURDAY = 6;
+    var getMonthLeftShiftable = function(year, month) {
+      if (month === 0) {
+        return false;
+      }
+      var start = new Date(year, month, 1);
+      return start.getDay() !== SUNDAY;
+    };
+
+    var getColumnReduce = function(year, month) {
+      return _.chain(_.range(0, month + 1)).map(function(m) {
+        return getMonthLeftShiftable(year, m);
+      }).reduce(function(sum, shiftable) {
+        return sum + (shiftable ? 1 : 0);
+      }, 0).value();
+    };
+
     var dataset = _(_.range(1, 365)).map(function(it) {
       return new Date(2014, 0, it);
     });
@@ -55,11 +95,15 @@
       sum += it;
       return ret;
     });
-    console.log(accu[0]);
     // January = 0
     // February = 1
     // Sunday = 0
     // Saturday = 6
+    // Jan 1st, getDate() === 1
+    var daysInWeek = 7;
+    var rectSize = 18;
+    var gapSize = 2;
+    var monthGapSize = (rectSize + gapSize) / 2;
 
     svg.selectAll('rect')
         .data(dataset)
@@ -67,17 +111,23 @@
         .append('rect')
         .attr('class', 'bar')
         .attr('x', function(d, i) {
-          var offset = new Date(2014, d.getMonth(), 1).getDay();
-          var t = d.getDate() - 1 + offset;
-          return (accu[d.getMonth()] + Math.floor(t / 7) - d.getMonth() * 0.7) * 22;
+          var year = 1900 + d.getYear();
+          var month = d.getMonth();
+          var offset = getMonthDayOffset(1900 + d.getYear(), d.getMonth());
+          var dayInMonth = d.getDate() - 1;
+          var dayAfterOffset = dayInMonth + offset;
+          var weekNumberInMonth = Math.floor(dayAfterOffset / daysInWeek);
+          var monthStartColumn = getStartColumn(year, month);
+          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize)
+              -  monthGapSize * getColumnReduce(year, month);
         })
         .attr('y', function(d, i) {
-          var offset = new Date(2014, d.getMonth(), 1).getDay();
+          var offset = getMonthDayOffset(1900 + d.getYear(), d.getMonth());
           var t = d.getDate() - 1 + offset;
-          return (t % 7) * 22;
+          return (t % daysInWeek) * (rectSize + gapSize);
         })
-        .attr('width', 20)
-        .attr('height', 20);
+        .attr('width', rectSize)
+        .attr('height', rectSize);
   </script>
 </body>
 </html>
