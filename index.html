@@ -29,11 +29,14 @@
 <body>
   <div id="chartArea"></div>
   <script>
-    
+
+    // get what day the first day of the month is
+    // Sunday = 0, Saturday = 6
     var getMonthDayOffset = function(year, month) {
       return new Date(year, month, 1).getDay();
     };
 
+    // get how many weeks a given month will occupy
     var getMonthColumnWidth = function(year, month) {
       var begin = new Date(year, month, 1);
       var end = new Date(year, month + 1, 0);
@@ -43,6 +46,8 @@
       return weeks;
     };
 
+    // if the first week is column zero
+    // this function return the start column of the given month
     var getStartColumn = function(year, month) {
       return _.chain(_.range(0, month)).map(function(m) {
         return getMonthColumnWidth(year, m);
@@ -61,6 +66,7 @@
       return start.getDay() !== SUNDAY;
     };
 
+    // for a given month, return how many months gap before this month can be reduced
     var getColumnReduce = function(year, month) {
       return _.chain(_.range(0, month + 1)).map(function(m) {
         return getMonthLeftShiftable(year, m);
@@ -118,8 +124,8 @@
           var dayAfterOffset = dayInMonth + offset;
           var weekNumberInMonth = Math.floor(dayAfterOffset / daysInWeek);
           var monthStartColumn = getStartColumn(year, month);
-          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize)
-              -  monthGapSize * getColumnReduce(year, month);
+          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize);
+              //-  monthGapSize * getColumnReduce(year, month);
         })
         .attr('y', function(d, i) {
           var offset = getMonthDayOffset(1900 + d.getYear(), d.getMonth());
