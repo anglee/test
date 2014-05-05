@@ -29,6 +29,14 @@
 <body>
   <div id="chartArea"></div>
   <script>
+    // January = 0
+    // February = 1
+    // Sunday = 0
+    // Saturday = 6
+    // Jan 1st, getDate() === 1
+    var SUNDAY = 0;
+    var SATURDAY = 6;
+    var daysInWeek = 7;
 
     // get what day the first day of the month is
     // Sunday = 0, Saturday = 6
@@ -56,8 +64,6 @@
       }, 0).value();
     };
 
-    var SUNDAY = 0;
-    var SATURDAY = 6;
     var getMonthLeftShiftable = function(year, month) {
       if (month === 0) {
         return false;
@@ -75,42 +81,18 @@
       }, 0).value();
     };
 
-    var dataset = _(_.range(1, 365)).map(function(it) {
-      return new Date(2014, 0, it);
-    });
-    window.dataset = dataset;
     var svg = d3.select('#chartArea').append('svg')
         .attr('width', 1500)
         .attr('height', 500);
 
-    var temp = _(_.range(1, 13)).map(function(m) {
-      var begin = new Date(2014, m - 1, 1);
-      var end = new Date(2014, m, 0);
-      var days = end.getDate() - begin.getDate() + 1;
-      var offset = begin.getDay();
-      var weeks = Math.ceil((days + offset) / 7);
-      if (end.getDay() === 6) {
-        weeks += 1;
-      }
-      return weeks;
-    });
-
-    var sum = 0;
-    var accu = _(temp).map(function(it) {
-      var ret = sum;
-      sum += it;
-      return ret;
-    });
-    // January = 0
-    // February = 1
-    // Sunday = 0
-    // Saturday = 6
-    // Jan 1st, getDate() === 1
-    var daysInWeek = 7;
     var rectSize = 18;
     var gapSize = 2;
     var monthGapSize = (rectSize + gapSize) / 2;
 
+    var dataset = _(_.range(1, 365)).map(function(it) {
+      return new Date(2014, 0, it);
+    });
+    window.dataset = dataset;
     svg.selectAll('rect')
         .data(dataset)
         .enter()
