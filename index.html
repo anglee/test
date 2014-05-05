@@ -13,10 +13,10 @@
       padding-left: 10px;
     }
 
-    .bar
-    {
-      fill: teal;
-    }
+    /*.bar*/
+    /*{*/
+      /*fill: teal;*/
+    /*}*/
 
     #chartArea
     {
@@ -36,49 +36,35 @@
     // Jan 1st, getDate() === 1
     var SUNDAY = 0;
     var SATURDAY = 6;
-    var daysInWeek = 7;
+    var JANUARY = 0;
+    var DAYS_IN_WEEK = 7;
+    var ONE_DAY = 24 * 60 * 60 * 1000;
 
     // get what day the first day of the month is
     // Sunday = 0, Saturday = 6
-    var getMonthDayOffset = function(year, month) {
-      return new Date(year, month, 1).getDay();
+    var getMonthDayOffset = function(fullYear, month) {
+      return new Date(fullYear, month, 1).getDay();
     };
 
-    // get how many weeks a given month will occupy
-    var getMonthColumnWidth = function(year, month) {
-      var begin = new Date(year, month, 1);
-      var end = new Date(year, month + 1, 0);
-      var days = end.getDate() - begin.getDate() + 1;
-      var offset = begin.getDay();
-      var weeks = Math.ceil((offset + days) / 7);
-      return weeks;
+    // get days count in the given month
+    var getDaysInAMonth = function(fullYear, month) {
+      return new Date(fullYear, month + 1, 0).getDate();
+    };
+
+    // get the day of the year, Jan 1st = 1;
+    var getDayOfTheYear = function(date) {
+      return _.chain(_.range(0, date.getMonth())).map(function(m) {
+        return getDaysInAMonth(date.getFullYear(), m);
+      }).reduce(function(sum, d) {
+        return sum + d;
+      }, 0).value() + date.getDate();
     };
 
     // if the first week is column zero
     // this function return the start column of the given month
-    var getStartColumn = function(year, month) {
-      return _.chain(_.range(0, month)).map(function(m) {
-        return getMonthColumnWidth(year, m);
-      }).reduce(function(sum, w) {
-        return sum + w;
-      }, 0).value();
-    };
-
-    var getMonthLeftShiftable = function(year, month) {
-      if (month === 0) {
-        return false;
-      }
-      var start = new Date(year, month, 1);
-      return start.getDay() !== SUNDAY;
-    };
-
-    // for a given month, return how many months gap before this month can be reduced
-    var getColumnReduce = function(year, month) {
-      return _.chain(_.range(0, month + 1)).map(function(m) {
-        return getMonthLeftShiftable(year, m);
-      }).reduce(function(sum, shiftable) {
-        return sum + (shiftable ? 1 : 0);
-      }, 0).value();
+    var getMonthWeekOffset = function(fullYear, month) {
+      var firstDay = new Date(fullYear, month, 1);
+      return Math.ceil((getMonthDayOffset(fullYear, JANUARY) + getDayOfTheYear(firstDay)) / DAYS_IN_WEEK);
     };
 
     var svg = d3.select('#chartArea').append('svg')
@@ -92,6 +78,9 @@
     var dataset = _(_.range(1, 365)).map(function(it) {
       return new Date(2014, 0, it);
     });
+    var colorScale = d3.scale.quantile()
+        .domain([0, 11])
+        .range(['yellow', 'orange', 'green', 'red', 'purple', 'teal', 'pink', 'blue', 'white', 'black', 'cyan', 'magenta']);
     window.dataset = dataset;
     svg.selectAll('rect')
         .data(dataset)
@@ -99,20 +88,20 @@
         .append('rect')
         .attr('class', 'bar')
         .attr('x', function(d, i) {
-          var year = 1900 + d.getYear();
-          var month = d.getMonth();
-          var offset = getMonthDayOffset(1900 + d.getYear(), d.getMonth());
+          var offset = getMonthDayOffset(d.getFullYear(), d.getMonth());
           var dayInMonth = d.getDate() - 1;
           var dayAfterOffset = dayInMonth + offset;
-          var weekNumberInMonth = Math.floor(dayAfterOffset / daysInWeek);
-          var monthStartColumn = getStartColumn(year, month);
+          var weekNumberInMonth = Math.floor(dayAfterOffset / DAYS_IN_WEEK);
+          var monthStartColumn = getMonthWeekOffset(d.getFullYear(), d.getMonth());
           return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize);
-              //-  monthGapSize * getColumnReduce(year, month);
         })
         .attr('y', function(d, i) {
-          var offset = getMonthDayOffset(1900 + d.getYear(), d.getMonth());
+          var offset = getMonthDayOffset(d.getFullYear(), d.getMonth());
           var t = d.getDate() - 1 + offset;
-          return (t % daysInWeek) * (rectSize + gapSize);
+          return (t % DAYS_IN_WEEK) * (rectSize + gapSize);
+        })
+        .attr('fill', function(d, i) {
+         return colorScale(d.getMonth());
         })
         .attr('width', rectSize)
         .attr('height', rectSize);
