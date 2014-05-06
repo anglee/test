@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>TEST</title>
   <script src="bower_components/d3/d3.js"></script>
+  <script src="bower_components/jquery/jquery.js"></script>
   <script src="bower_components/underscore/underscore.js"></script>
   <style type="text/css">
 
@@ -73,7 +74,7 @@
 
     var rectSize = 18;
     var gapSize = 2;
-    var monthGapSize = (rectSize + gapSize) / 2;
+    var monthGapSize = 5;//(rectSize + gapSize) / 2;
 
     var dataset = _(_.range(1, 365)).map(function(it) {
       return new Date(2014, 0, it);
@@ -93,7 +94,7 @@
           var dayAfterOffset = dayInMonth + offset;
           var weekNumberInMonth = Math.floor(dayAfterOffset / DAYS_IN_WEEK);
           var monthStartColumn = getMonthWeekOffset(d.getFullYear(), d.getMonth());
-          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize);
+          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize) + d.getMonth() * monthGapSize;
         })
         .attr('y', function(d, i) {
           var offset = getMonthDayOffset(d.getFullYear(), d.getMonth());
