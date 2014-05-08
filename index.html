@@ -76,12 +76,29 @@
     var gapSize = 2;
     var monthGapSize = 5;//(rectSize + gapSize) / 2;
 
-    var dataset = _(_.range(1, 365)).map(function(it) {
-      return new Date(2014, 0, it);
+    var dataset = _(_.range(1, 366)).map(function(it) {
+      return {
+        time: new Date(2014, 0, it),
+        data: Math.random() * 500
+      };
     });
     var colorScale = d3.scale.quantile()
         .domain([0, 11])
         .range(['yellow', 'orange', 'green', 'red', 'purple', 'teal', 'pink', 'blue', 'white', 'black', 'cyan', 'magenta']);
+    var heatScale = d3.scale.linear().domain([0, 500]).range(['red', 'yellow']);
+    var getX = function(t) {
+      var offset = getMonthDayOffset(t.getFullYear(), t.getMonth());
+      var dayInMonth = t.getDate() - 1;
+      var dayAfterOffset = dayInMonth + offset;
+      var weekNumberInMonth = Math.floor(dayAfterOffset / DAYS_IN_WEEK);
+      var monthStartColumn = getMonthWeekOffset(t.getFullYear(), t.getMonth());
+      return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize) + t.getMonth() * monthGapSize;
+    };
+    var getY = function(t) {
+      var offset = getMonthDayOffset(t.getFullYear(), t.getMonth());
+      var t = t.getDate() - 1 + offset;
+      return (t % DAYS_IN_WEEK) * (rectSize + gapSize);
+    }
     window.dataset = dataset;
     svg.selectAll('rect')
         .data(dataset)
@@ -89,20 +106,13 @@
         .append('rect')
         .attr('class', 'bar')
         .attr('x', function(d, i) {
-          var offset = getMonthDayOffset(d.getFullYear(), d.getMonth());
-          var dayInMonth = d.getDate() - 1;
-          var dayAfterOffset = dayInMonth + offset;
-          var weekNumberInMonth = Math.floor(dayAfterOffset / DAYS_IN_WEEK);
-          var monthStartColumn = getMonthWeekOffset(d.getFullYear(), d.getMonth());
-          return (monthStartColumn + weekNumberInMonth) * (rectSize + gapSize) + d.getMonth() * monthGapSize;
+          return getX(d.time);
         })
         .attr('y', function(d, i) {
-          var offset = getMonthDayOffset(d.getFullYear(), d.getMonth());
-          var t = d.getDate() - 1 + offset;
-          return (t % DAYS_IN_WEEK) * (rectSize + gapSize);
+          return getY(d.time);
         })
         .attr('fill', function(d, i) {
-         return colorScale(d.getMonth());
+         return heatScale(d.data);
         })
         .attr('width', rectSize)
         .attr('height', rectSize);
