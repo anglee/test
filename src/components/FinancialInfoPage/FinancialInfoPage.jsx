@@ -5,7 +5,7 @@ import { routeMap } from "../../constants/pages/routes";
 import { Link } from "react-router-dom";
 import pages from "../../constants/pages/pages";
 import { stepsMap } from "../../constants/pages/steps";
-import queryString from "query-string";
+import queryString from "qs";
 
 const FormItem = Form.Item;
 
